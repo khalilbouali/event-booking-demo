@@ -1,4 +1,4 @@
-# Carrefour Event Reservation Kata
+# Event Reservation Demo
 
 A Dockerized event reservation platform built as a reactive microservices' system.
 
