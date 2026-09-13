@@ -1,0 +1,62 @@
+<main>
+
+  <h1>
+    Carrefour Events
+  </h1>
+
+  @if (authService.user(); as user) {
+
+    <p>
+      Welcome {{ user.name }}
+    </p>
+
+
+    <section>
+
+      <h2>
+        Menu
+      </h2>
+
+      <a matButton routerLink="/events">
+        Events
+      </a>
+
+      <a matButton routerLink="/reservations">
+        My reservations
+      </a>
+
+      <a matButton routerLink="/payments">
+        My payments
+      </a>
+
+      <a matButton (click)="logout()">
+        Logout
+      </a>
+
+    </section>
+
+
+    @if (user.isAdmin) {
+
+      <section class="backoffice">
+
+        <h2>
+          Backoffice
+        </h2>
+
+        <button
+          matButton="filled"
+          type="button"
+          (click)="openCreateEvent()">
+
+          Create event
+
+        </button>
+
+      </section>
+
+    }
+
+  }
+
+</main>

@@ -1,0 +1,70 @@
+<h2 mat-dialog-title>
+  Book my seat
+</h2>
+
+<mat-dialog-content>
+
+  <h3>
+    {{ data.eventName }}
+  </h3>
+
+  <p>
+    Amount:
+    <strong>
+      {{ data.price }} MAD
+    </strong>
+  </p>
+
+  <mat-checkbox
+    [(ngModel)]="isValid"
+    [disabled]="processing()">
+
+    Simulate successful payment
+
+  </mat-checkbox>
+
+  @if (error()) {
+
+    <p class="error-message">
+      {{ error() }}
+    </p>
+
+  }
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+
+  <button
+    matButton
+    type="button"
+    [disabled]="processing()"
+    (click)="cancel()">
+
+    Cancel
+
+  </button>
+
+  <button
+    matButton="filled"
+    type="button"
+    [disabled]="processing()"
+    (click)="pay()">
+
+    @if (processing()) {
+
+      <mat-spinner
+        diameter="20">
+      </mat-spinner>
+
+      Processing...
+
+    } @else {
+
+      Pay {{ data.price }} MAD
+
+    }
+
+  </button>
+
+</mat-dialog-actions>

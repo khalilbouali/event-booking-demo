@@ -1,0 +1,325 @@
+services:
+
+  postgres-keycloak:
+    image: postgres:18.6
+    container_name: postgres-keycloak
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: password
+    volumes:
+      - keycloak-db:/var/lib/postgresql
+    networks: [appnet]
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    command: [ "redis-server", "--appendonly", "yes" ]
+    volumes:
+      - redis-data:/data
+    networks: [ appnet ]
+#    ports:
+#      - "6379:6379"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.3
+    container_name: keycloak
+    command: [ "start-dev" ]
+
+    environment:
+      KC_DB: postgres
+      KC_DB_URL_HOST: postgres-keycloak
+      KC_DB_URL_PORT: 5432
+      KC_DB_URL_DATABASE: keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: password
+
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+
+      KC_HOSTNAME: "https://localhost/keycloak"
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_PROXY_HEADERS: "xforwarded"
+      KC_HTTP_ENABLED: "true"
+      KC_HTTP_RELATIVE_PATH: "/keycloak"
+
+    depends_on:
+      - postgres-keycloak
+
+    networks:
+      - appnet
+#    ports:
+#      - "8084:8080"
+
+  # =========================================================
+  # MongoDB - Event service
+  # Internal Docker address:
+  # mongodb://mongo-event:27017/event_db
+  # Host access:
+  # mongodb://localhost:27017/event_db
+  # =========================================================
+
+  mongo-event:
+    image: mongo:7
+    container_name: mongo-event
+    environment:
+      MONGO_INITDB_DATABASE: event_db
+    volumes:
+      - mongo-event-data:/data/db
+    networks: [appnet]
+#    ports:
+#      - "27017:27017"
+
+  # =========================================================
+  # MongoDB - Reservation service
+  # Internal Docker address:
+  # mongodb://mongo-reservation:27017/reservation_db
+  # Host access:
+  # mongodb://localhost:27018/reservation_db
+  # =========================================================
+
+  mongo-reservation:
+    image: mongo:7
+    container_name: mongo-reservation
+    environment:
+      MONGO_INITDB_DATABASE: reservation_db
+    volumes:
+      - mongo-reservation-data:/data/db
+    networks: [appnet]
+#    ports:
+#      - "27018:27017"
+
+  # =========================================================
+  # MongoDB - Payment service
+  # Internal Docker address:
+  # mongodb://mongo-payment:27017/payment_db
+  # Host access:
+  # mongodb://localhost:27019/payment_db
+  # =========================================================
+
+  mongo-payment:
+    image: mongo:7
+    container_name: mongo-payment
+    environment:
+      MONGO_INITDB_DATABASE: payment_db
+    volumes:
+      - mongo-payment-data:/data/db
+    networks: [appnet]
+#    ports:
+#      - "27019:27017"
+
+  event-ms:
+    build: ./event-ms
+    container_name: event-ms
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+      MONGO_URI: mongodb://mongo-event:27017/event_db
+      KEYCLOAK_ISSUER_URI: https://localhost/keycloak/realms/carrefour_kata_realm
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/keycloak/realms/carrefour_kata_realm/protocol/openid-connect/certs
+      KEYCLOAK_CLIENT_ID: "carrefour-kata-id"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      RESERVATION_EVENTS_TOPIC: reservation-events
+
+    depends_on:
+      - mongo-event
+      - keycloak
+    networks:
+      - appnet
+
+  reservation-ms:
+    build: ./reservation-ms
+    container_name: reservation-ms
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+      MONGO_URI: mongodb://mongo-reservation:27017/reservation_db
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EVENT_MS_URL: "http://event-ms:8080"
+      KEYCLOAK_ISSUER_URI: https://localhost/keycloak/realms/carrefour_kata_realm
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/keycloak/realms/carrefour_kata_realm/protocol/openid-connect/certs
+
+    depends_on:
+      - mongo-reservation
+      - keycloak
+    networks:
+      - appnet
+
+  payment-ms:
+    build: ./payment-ms
+    container_name: payment-ms
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+      MONGO_URI: mongodb://mongo-payment:27017/payment_db
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KEYCLOAK_ISSUER_URI: https://localhost/keycloak/realms/carrefour_kata_realm
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/keycloak/realms/carrefour_kata_realm/protocol/openid-connect/certs
+
+    depends_on:
+      - mongo-payment
+      - keycloak
+    networks:
+      - appnet
+
+  notification-ms:
+    build: ./notification-ms
+    container_name: notification-ms
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+    networks:
+      - appnet
+
+  cloud-bff:
+    build: ./cloud-bff
+    container_name: cloud-bff
+
+    environment:
+      SPRING_PROFILES_ACTIVE: default
+
+      # =====================================================
+      # Public/browser-facing URLs
+      # =====================================================
+
+      FRONT_URI: "https://localhost"
+      REDIRECT_URI: "https://localhost/login/oauth2/code/cloud-bff"
+      KEYCLOAK_AUTHORIZATION_URL: "https://localhost/keycloak/realms/carrefour_kata_realm/protocol/openid-connect/auth"
+      KEYCLOAK_LOGOUT_URL: "https://localhost/keycloak/realms/carrefour_kata_realm/protocol/openid-connect/logout"
+      KEYCLOAK_ISSUER_URI: "https://localhost/keycloak/realms/carrefour_kata_realm"
+      POST_LOGOUT_REDIRECT_URI: "https://localhost/signed-out"
+
+      # =====================================================
+      # Internal Docker -> Keycloak
+      # =====================================================
+
+      KEYCLOAK_TOKEN_URL: "http://keycloak:8080/keycloak/realms/carrefour_kata_realm/protocol/openid-connect/token"
+      KEYCLOAK_JWK_SET_URI: "http://keycloak:8080/keycloak/realms/carrefour_kata_realm/protocol/openid-connect/certs"
+      KEYCLOAK_USERINFO_URL: "http://keycloak:8080/keycloak/realms/carrefour_kata_realm/protocol/openid-connect/userinfo"
+      KEYCLOAK_REVOKE_URL: "http://keycloak:8080/keycloak/realms/carrefour_kata_realm/protocol/openid-connect/revoke"
+
+
+      # =====================================================
+      # OAuth client
+      # =====================================================
+
+      CLIENT_ID: "carrefour-kata-id"
+      CLIENT_SECRET: "3DGnKgdp0so6tDwHLD3jnwLz2oMbRU6n1W28yh8Ut185QgM8WGxti06NcBZmKCcxpdKYtXa78FrEy78lLDpy2q"
+
+      # =====================================================
+      # Redis
+      # =====================================================
+
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+      # =====================================================
+      # Microservices
+      # =====================================================
+
+      EVENT_MS_URL: "http://event-ms:8080"
+      RESERVATION_MS_URL: "http://reservation-ms:8080"
+      PAYMENT_MS_URL: "http://payment-ms:8080"
+
+      # =====================================================
+      # Cookie
+      # =====================================================
+
+      COOKIE_SECURE: "true"
+
+    depends_on:
+      - redis
+      - keycloak
+      - event-ms
+      - reservation-ms
+      - payment-ms
+
+    networks:
+      - appnet
+
+  gateway:
+    image: nginx:1.27-alpine
+    container_name: gateway
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./gateway/certs:/etc/nginx/certs:ro
+    depends_on:
+      - front
+      - cloud-bff
+      - keycloak
+    networks:
+      - appnet
+
+  kafka:
+    image: apache/kafka:4.1.0
+    container_name: kafka
+
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+    networks:
+      - appnet
+
+  front:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: front
+    networks: [ appnet ]
+    # No host port needed; gateway serves front
+
+
+  reservation-tests:
+    image: maven:3.9-eclipse-temurin-25
+
+    working_dir: /workspace
+
+    volumes:
+      - ./reservation-ms:/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+      - maven-cache:/root/.m2
+
+    environment:
+      TESTCONTAINERS_HOST_OVERRIDE: host.docker.internal
+
+    command: mvn clean verify
+
+  event-tests:
+    image: maven:3.9-eclipse-temurin-25
+
+    working_dir: /workspace
+
+    volumes:
+      - ./event-ms:/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+      - maven-cache:/root/.m2
+
+    environment:
+      TESTCONTAINERS_HOST_OVERRIDE: host.docker.internal
+
+    command: mvn clean verify
+
+networks:
+  appnet:
+
+
+volumes:
+  keycloak-db:
+    external: true
+    name: keycloak-db
+  redis-data:
+  maven-cache:
+  mongo-event-data:
+  mongo-reservation-data:
+  mongo-payment-data:

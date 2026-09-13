@@ -1,0 +1,69 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: reservation-ms
+
+  mongodb:
+    uri: ${MONGO_URI}
+    representation:
+      uuid: standard
+
+  data:
+    mongodb:
+      auto-index-creation: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI}
+          audiences:
+            - reservation-service
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+
+    consumer:
+      group-id: reservation-service
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: record
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      retries: 3
+      properties:
+        "[retry.backoff.ms]": 1000
+        "[acks]": all
+        "[enable.idempotence]": true
+
+kafka:
+  topics:
+    payment-events: payment-events
+    reservation-events: reservation-events
+
+reservation:
+  hold-duration: 10m
+  expiration-check-delay: 5s
+
+services:
+  event:
+    base-url: ${EVENT_MS_URL}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info

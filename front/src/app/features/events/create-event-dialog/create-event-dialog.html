@@ -1,0 +1,192 @@
+<h2 mat-dialog-title>
+  Create event
+</h2>
+
+<mat-dialog-content>
+
+  <form
+    id="create-event-form"
+    [formGroup]="form"
+    (ngSubmit)="create()">
+
+    <mat-form-field
+      appearance="outline"
+      class="full-width">
+
+      <mat-label>
+        Event name
+      </mat-label>
+
+      <input
+        matInput
+        formControlName="name">
+
+      @if (
+        form.controls.name.touched &&
+        form.controls.name.hasError('required')
+        ) {
+        <mat-error>
+          Event name is required.
+        </mat-error>
+      }
+
+    </mat-form-field>
+
+
+    <mat-form-field
+      appearance="outline"
+      class="full-width">
+
+      <mat-label>
+        Venue
+      </mat-label>
+
+      <input
+        matInput
+        formControlName="venue">
+
+      @if (
+        form.controls.venue.touched &&
+        form.controls.venue.hasError('required')
+        ) {
+        <mat-error>
+          Venue is required.
+        </mat-error>
+      }
+
+    </mat-form-field>
+
+
+    <mat-form-field
+      appearance="outline"
+      class="full-width">
+
+      <mat-label>
+        Start date and time
+      </mat-label>
+
+      <input
+        matInput
+        type="datetime-local"
+        formControlName="startsAt">
+
+      @if (
+        form.controls.startsAt.touched &&
+        form.controls.startsAt.invalid
+        ) {
+        <mat-error>
+          Start date is required.
+        </mat-error>
+      }
+
+    </mat-form-field>
+
+
+    <mat-form-field
+      appearance="outline"
+      class="full-width">
+
+      <mat-label>
+        Number of seats
+      </mat-label>
+
+      <input
+        matInput
+        type="number"
+        min="1"
+        [max]="maxSeats"
+        formControlName="seatCount">
+
+      <mat-hint>
+        Maximum {{ maxSeats }} seats
+      </mat-hint>
+
+      @if (
+        form.controls.seatCount.touched &&
+        form.controls.seatCount.invalid
+        ) {
+        <mat-error>
+          Enter between 1 and
+          {{ maxSeats }} seats.
+        </mat-error>
+      }
+
+    </mat-form-field>
+
+
+    <mat-form-field
+      appearance="outline"
+      class="full-width">
+
+      <mat-label>
+        Price per seat
+      </mat-label>
+
+      <input
+        matInput
+        type="number"
+        min="0.01"
+        step="0.01"
+        formControlName="price">
+
+      @if (
+        form.controls.price.touched &&
+        form.controls.price.invalid
+        ) {
+        <mat-error>
+          Price must be greater than zero.
+        </mat-error>
+      }
+
+    </mat-form-field>
+
+    @if (error()) {
+      <p class="error-message">
+        {{ error() }}
+      </p>
+    }
+
+  </form>
+
+</mat-dialog-content>
+
+
+<mat-dialog-actions align="end">
+
+  <button
+    matButton
+    type="button"
+    [disabled]="creating()"
+    (click)="cancel()">
+
+    Cancel
+
+  </button>
+
+  <button
+    matButton="filled"
+    type="submit"
+    form="create-event-form"
+    [disabled]="
+      form.invalid ||
+      creating()
+    ">
+
+    @if (creating()) {
+
+      <mat-spinner
+        diameter="20">
+      </mat-spinner>
+
+      Creating...
+
+    } @else {
+
+      Create event
+
+    }
+
+  </button>
+
+</mat-dialog-actions>
+

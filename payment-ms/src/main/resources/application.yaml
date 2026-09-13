@@ -1,0 +1,47 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: payment-ms
+
+  mongodb:
+    uri: ${MONGO_URI}
+    representation:
+      uuid: standard
+
+  data:
+    mongodb:
+      auto-index-creation: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI}
+          audiences:
+            - payment-service
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      retries: 3
+      properties:
+        "[retry.backoff.ms]": 1000
+        "[acks]": all
+        "[enable.idempotence]": true
+
+kafka:
+  topics:
+    payment-events: payment-events
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info

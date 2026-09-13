@@ -1,0 +1,58 @@
+<main>
+  <h1>My reservations</h1>
+
+  @if (loading()) {
+    <p>Loading reservations...</p>
+  }
+
+  @if (error()) {
+    <p>{{ error() }}</p>
+  }
+
+  <div class="reservations">
+
+    @for (
+      reservation of reservations();
+      track reservation.id
+      ) {
+
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>
+            {{ reservation.eventName }}
+          </mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+          <p>
+            <strong>Venue:</strong>
+            {{ reservation.eventVenue }}
+          </p>
+
+          <p>
+            <strong>Date:</strong>
+            {{ reservation.eventStartsAt | date:'medium' }}
+          </p>
+
+          <p>
+            <strong>Seat:</strong>
+            {{ reservation.seatId }}
+          </p>
+
+          <p>
+            <strong>Status:</strong>
+            {{ reservation.status }}
+          </p>
+        </mat-card-content>
+      </mat-card>
+
+    } @empty {
+
+      @if (!loading()) {
+        <p>You don't have any reservations yet.</p>
+      }
+
+    }
+
+  </div>
+</main>

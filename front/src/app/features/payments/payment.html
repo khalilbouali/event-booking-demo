@@ -1,0 +1,65 @@
+<main>
+  <h1>My payments</h1>
+
+  @if (loading()) {
+    <p>Loading payments...</p>
+  }
+
+  @if (error()) {
+    <p>{{ error() }}</p>
+  }
+
+  <div class="payments">
+
+    @for (
+      payment of payments();
+      track payment.id
+      ) {
+
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>
+            {{ payment.eventName }}
+          </mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+
+          <p>
+            <strong>Venue:</strong>
+            {{ payment.eventVenue }}
+          </p>
+
+          <p>
+            <strong>Event date:</strong>
+            {{ payment.eventStartsAt | date:'medium' }}
+          </p>
+
+          <p>
+            <strong>Seat:</strong>
+            {{ payment.seatId }}
+          </p>
+
+          <p>
+            <strong>Amount:</strong>
+            {{ payment.amount }} MAD
+          </p>
+
+          <p>
+            <strong>Payment status:</strong>
+            {{ payment.status }}
+          </p>
+
+        </mat-card-content>
+      </mat-card>
+
+    } @empty {
+
+      @if (!loading()) {
+        <p>You don't have any payments yet.</p>
+      }
+
+    }
+
+  </div>
+</main>

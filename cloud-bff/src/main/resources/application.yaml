@@ -1,0 +1,74 @@
+server:
+  port: 8080
+  forward-headers-strategy: framework
+
+  reactive:
+    session:
+      timeout: 30m
+      cookie:
+        name: BFFSESSION
+        http-only: true
+        secure: ${COOKIE_SECURE}
+        same-site: lax
+        path: /
+
+app:
+  cors:
+    allowed-origins: ${FRONT_URI}
+
+  security:
+    oidc:
+      logout-uri: ${KEYCLOAK_LOGOUT_URL}
+      post-logout-redirect-uri: ${POST_LOGOUT_REDIRECT_URI}
+
+spring:
+  application:
+    name: cloud-bff
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
+  security:
+    oauth2:
+      client:
+        registration:
+          cloud-bff:
+            provider: keycloak
+            client-id: ${CLIENT_ID}
+            client-secret: ${CLIENT_SECRET}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            redirect-uri: ${REDIRECT_URI}
+            scope:
+              - openid
+              - profile
+              - email
+        provider:
+          keycloak:
+            # Browser-facing endpoint
+            authorization-uri: ${KEYCLOAK_AUTHORIZATION_URL}
+            # BFF -> Keycloak internal Docker calls
+            token-uri: ${KEYCLOAK_TOKEN_URL}
+            jwk-set-uri: ${KEYCLOAK_JWK_SET_URI}
+            user-info-uri: ${KEYCLOAK_USERINFO_URL}
+            user-name-attribute: preferred_username
+
+services:
+  event:
+    base-url: ${EVENT_MS_URL}
+
+  reservation:
+    base-url: ${RESERVATION_MS_URL}
+
+  payment:
+    base-url: ${PAYMENT_MS_URL}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info

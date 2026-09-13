@@ -1,0 +1,19 @@
+package fr.carrefour.payment;
+
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Bean;
+import org.testcontainers.mongodb.MongoDBContainer;
+
+import static org.testcontainers.utility.DockerImageName.parse;
+
+@TestConfiguration(proxyBeanMethods = false)
+class TestcontainersConfiguration {
+
+	@Bean
+	@ServiceConnection
+	MongoDBContainer mongoDbContainer() {
+		return new MongoDBContainer(parse("mongo:latest"));
+	}
+
+}

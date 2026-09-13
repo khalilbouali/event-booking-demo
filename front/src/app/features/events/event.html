@@ -1,0 +1,97 @@
+<main>
+
+  <h1>Available events</h1>
+
+  @if (loading()) {
+    <p>Loading events...</p>
+  }
+
+  @if (error()) {
+    <p>{{ error() }}</p>
+  }
+
+  <div class="events">
+
+    @for (event of events(); track event.id) {
+
+      <mat-card>
+
+        <mat-card-header>
+
+          <mat-card-title>
+            {{ event.name }}
+          </mat-card-title>
+
+        </mat-card-header>
+
+
+        <mat-card-content>
+
+          <p>
+            <strong>Venue:</strong>
+            {{ event.venue }}
+          </p>
+
+          <p>
+            <strong>Starts at:</strong>
+            {{ event.startsAt | date:'medium' }}
+          </p>
+
+          <p>
+            <strong>Price:</strong>
+            {{ event.price }} MAD
+          </p>
+
+          <p>
+            <strong>Remaining seats:</strong>
+
+            {{ event.remainingSeatCount }}
+            /
+            {{ event.seatCount }}
+          </p>
+
+          @if (event.remainingSeatCount === 0) {
+
+            <p>
+              Sold out
+            </p>
+
+          }
+
+        </mat-card-content>
+
+
+        <mat-card-actions>
+
+          <button
+            matButton="filled"
+            type="button"
+            [disabled]="
+              reservationInProgress() ||
+              event.remainingSeatCount === 0
+            "
+            (click)="openPaymentDialog(event)">
+
+            Book my seat
+
+          </button>
+
+        </mat-card-actions>
+
+      </mat-card>
+
+    } @empty {
+
+      @if (!loading()) {
+
+        <p>
+          No events available.
+        </p>
+
+      }
+
+    }
+
+  </div>
+
+</main>
