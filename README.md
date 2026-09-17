@@ -1,4 +1,4 @@
-# Event Reservation Demo
+# Event Booking Demo
 
 A Dockerized event reservation platform built as a reactive microservices' system.
 
@@ -124,7 +124,7 @@ This is one of the most important configuration details.
 The browser-facing issuer is:
 
 ```text
-https://localhost/keycloak/realms/carrefour_kata_realm
+https://localhost/keycloak/realms/event_booking_realm
 ```
 
 The browser must use the public HTTPS hostname because the authorization flow happens in the user's browser.
@@ -134,13 +134,13 @@ Docker containers, however, must **not** use `localhost` to reach Keycloak: insi
 For internal calls, services use Docker DNS, for example:
 
 ```text
-http://keycloak:8080/keycloak/realms/carrefour_kata_realm/protocol/openid-connect/certs
+http://keycloak:8080/keycloak/realms/event_booking_realm/protocol/openid-connect/certs
 ```
 
 The token issuer still needs to be the public issuer:
 
 ```text
-https://localhost/keycloak/realms/carrefour_kata_realm
+https://localhost/keycloak/realms/event_booking_realm
 ```
 
 This split between the public issuer and internal network endpoints avoids container-routing problems and unnecessary TLS trust problems for internal calls.
@@ -499,24 +499,29 @@ Click on the Manage realms left menu tab, then click on Create realm button:
 Create a realm named:
 
 ```text
-carrefour_kata_realm
+event_booking_realm
 ```
 
 ![Alt text](images/create_realm_popup.png)
 
-Click on the created realm in Manage realms:
+You will be automatically redirected to this new realm that you created as a managed realm, if not,
+click on the created realm in Manage realms:
 
 ![Alt text](images/keycloak_realm_list.png)
 
 The resulting public issuer used by this application is:
 
 ```text
-https://localhost/keycloak/realms/carrefour_kata_realm
+https://localhost/keycloak/realms/event_booking_realm
 ```
+
+The current page should look as follows:
+
+![Alt text](images/current_realm_list.png)
 
 ## 3. Create the application client
 
-After making sure the current realm is "carrefour_kata_realm" in the upper left corner.
+After making sure the current realm is "event_booking_realm" in the upper left corner.
 
 Go to:
 
@@ -531,7 +536,7 @@ Use:
 
 ```text
 Client type: OpenID Connect
-Client ID:   carrefour-kata-id
+Client ID:   event-booking-id
 ```
 
 ![Alt text](images/create_client_1.png)
@@ -559,7 +564,7 @@ Configure:
 
 ```text
 Root URL:
-https://localhost/
+https://localhost
 
 Home URL:
 https://localhost/
@@ -584,7 +589,7 @@ Open:
 
 ```text
 Clients left menu tab
--> carrefour-kata-id in the clients id list
+-> event-booking-id in the clients id list
 -> Credentials tab
 ```
 
@@ -644,26 +649,13 @@ The expected token/user-info data should contain something equivalent to:
 }
 ```
 
-## 7. Create application realm roles
-
-Create the realm roles under the Realm roles left menu tab:
-
-```text
-Realm roles
--> Create Role
-```
-
-![Alt text](images/realm_admin.png)
-
-![Alt text](images/realm_user.png)
-
-## 8. Create application client roles
+## 7. Create application client roles
 
 Create the roles under the application client:
 
 ```text
 Clients
--> carrefour-kata-id
+-> event-booking-id
 -> Roles
 ```
 
@@ -685,7 +677,7 @@ The backend expects the access token to expose client roles under a structure eq
 ```json
 {
   "resource_access": {
-    "carrefour-kata-id": {
+    "event-booking-id": {
       "roles": [
         "user",
         "administrator"
@@ -702,9 +694,9 @@ ROLE_user
 ROLE_administrator
 ```
 
-Keycloak normally supplies client roles through its standard `roles` client scope. If `resource_access.carrefour-kata-id.roles` is missing from the access token, verify the `roles` client scope / client-role mapper before adding custom code in the services.
+Keycloak normally supplies client roles through its standard `roles` client scope. If `resource_access.event-booking-id.roles` is missing from the access token, verify the `roles` client scope / client-role mapper before adding custom code in the services.
 
-## 9. Configure access-token audiences
+## 8. Configure access-token audiences
 
 The downstream services validate that the access token is intended for them.
 
@@ -733,13 +725,13 @@ A working access token therefore contains audiences equivalent to:
 
 ### Add the audience mappers
 
-For the `carrefour-kata-id` client, open its dedicated client scope/mappers area. In Keycloak 26 this is typically:
+For the `event-booking-id` client, open its dedicated client scope/mappers area. In Keycloak 26 this is typically:
 
 ```text
 Clients
--> carrefour-kata-id
+-> event-booking-id
 -> Client scopes
--> carrefour-kata-id-dedicated
+-> event-booking-id-dedicated
 -> Mappers
 ```
 
@@ -753,7 +745,7 @@ Click on configure a new mapper.
 
 ![Alt text](images/scope_audience_mapper.png)
 
-Click on Audience Name and enter:
+Click on the mapper to Audience and enter:
 
 ```text
 Name:                     event-service-audience
@@ -804,6 +796,19 @@ Add to access token:      ON
 
 Adding these values to the **access token** is what matters for resource-server authorization. They do not need to be added to the ID token merely for downstream API authentication.
 
+## 9. Create application realm roles
+
+Create the realm roles under the Realm roles left menu tab:
+
+```text
+Realm roles
+-> Create Role
+```
+
+![Alt text](images/realm_admin.png)
+
+![Alt text](images/realm_user.png)
+
 ## 10. Configure login
 
 Turn Email as username ON.
@@ -825,8 +830,8 @@ Set at least:
 
 ```text
 Email verified turned ON
-Email: user@carrefour.fr or admin@carrefour.fr
-First name / Last name (recommended)
+Email: user@planevent.com
+Name: John Doe
 ```
 
 ![Alt text](images/create_user.png)
@@ -840,10 +845,11 @@ Click on Set password button.
 ![Alt text](images/save_user_pw.png)
 
 Then assign application roles:
+![Alt text](images/assign_user_roles.png)
 
 ```text
 Users
--> <user>
+-> user@planevent.com
 -> Role mapping
 -> Assign role
 -> Client roles
@@ -852,22 +858,18 @@ Users
 Assign:
 
 ```text
-user of client-id carrefour-kata-id
-```
-
-For an administrative test account, also assign:
-
-```text
-administrator of client-id carrefour-kata-id
+user of the client ID event-booking-id
 ```
 
 ![Alt text](images/set_user_role.png)
 
 Then assign realm roles:
 
+![Alt text](images/assign_user_roles.png)
+
 ```text
 Users
--> <user>
+-> user@planevent.com
 -> Role mapping
 -> Assign role
 -> Realm roles
@@ -876,16 +878,75 @@ Users
 Assign:
 
 ```text
-user
+realm_user
 ```
+![Alt text](images/affect_realm_role.png)
 
-For an administrative test account, also assign:
+Create an admin in:
 
 ```text
-administrator
+Users leftmenu tab
+-> Add user button
 ```
 
-![Alt text](images/set_realm_role.png)
+![Alt text](images/user_list.png)
+
+Set at least:
+
+```text
+Email verified turned ON
+Email: admin@planevent.com
+Name: Jane Doe
+```
+
+![Alt text](images/create_admin.png)
+
+Set a password under the user's credentials and make it temporary for local testing.
+
+![Alt text](images/set_admin_pw.png)
+
+Click on Set password button.
+
+![Alt text](images/save_admin_pw.png)
+
+Then assign application roles:
+![Alt text](images/assign_admin_roles.png)
+
+```text
+Users
+-> user@planevent.com
+-> Role mapping
+-> Assign role
+-> Client roles
+```
+
+Assign:
+
+```text
+user of the client ID event-booking-id
+administrator of the client ID event-booking-id
+```
+
+![Alt text](images/set_admin_role.png)
+
+Then assign realm roles:
+![Alt text](images/assign_admin_roles.png)
+
+```text
+Users
+-> admin@planevent.com
+-> Role mapping
+-> Assign role
+-> Realm roles
+```
+
+Assign:
+
+```text
+realm_user
+realm_admin
+```
+![Alt text](images/admin_realm_role.png)
 
 Make sure the user has an email address because the BFF exposes it through `/api/me` and the notification flow depends on user email information being available.
 
@@ -895,8 +956,8 @@ After login, the access token should have the essential characteristics below:
 
 ```json
 {
-  "iss": "https://localhost/keycloak/realms/carrefour_kata_realm",
-  "azp": "carrefour-kata-id",
+  "iss": "https://localhost/keycloak/realms/event_booking_realm",
+  "azp": "event-booking-id",
   "aud": [
     "event-service",
     "reservation-service",
@@ -905,7 +966,7 @@ After login, the access token should have the essential characteristics below:
   ],
   "email": "user@example.com",
   "resource_access": {
-    "carrefour-kata-id": {
+    "event-booking-id": {
       "roles": [
         "user"
       ]
@@ -914,7 +975,7 @@ After login, the access token should have the essential characteristics below:
 }
 ```
 
-An administrator should additionally have `administrator` inside the `carrefour-kata-id` role list.
+An administrator should additionally have `administrator` inside the `event-booking-id` role list.
 
 ---
 
@@ -1041,7 +1102,7 @@ The browser should normally use only the public gateway.
 | Reservation API through BFF | `https://localhost/api/reservations` |
 | Payment API through BFF | `https://localhost/api/payments` |
 | Public Keycloak base | `https://localhost/keycloak/` |
-| Public realm issuer | `https://localhost/keycloak/realms/carrefour_kata_realm` |
+| Public realm issuer | `https://localhost/keycloak/realms/event_booking_realm` |
 
 Do not use the Docker-internal service URLs from the browser. Addresses such as:
 
@@ -1201,13 +1262,13 @@ as though `localhost` referred to the Keycloak container.
 Inside Docker, use Keycloak's Docker service name for internal token/JWK calls, for example:
 
 ```text
-http://keycloak:8080/keycloak/realms/carrefour_kata_realm/protocol/openid-connect/certs
+http://keycloak:8080/keycloak/realms/event_booking_realm/protocol/openid-connect/certs
 ```
 
 while preserving the public token issuer:
 
 ```text
-https://localhost/keycloak/realms/carrefour_kata_realm
+https://localhost/keycloak/realms/event_booking_realm
 ```
 
 ## `502 Bad Gateway` from Nginx
@@ -1254,7 +1315,7 @@ Verify that the access token contains:
 ```json
 {
   "resource_access": {
-    "carrefour-kata-id": {
+    "event-booking-id": {
       "roles": [
         "administrator"
       ]
@@ -1263,7 +1324,7 @@ Verify that the access token contains:
 }
 ```
 
-Assign the role as a **client role of `carrefour-kata-id`**, not merely as an unrelated realm/client role.
+Assign the role as a **client role of `event-booking-id`**, not merely as an unrelated realm/client role.
 
 ## Microservice rejects the token because of audience
 

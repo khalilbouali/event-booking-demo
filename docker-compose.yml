@@ -114,9 +114,9 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: default
       MONGO_URI: mongodb://mongo-event:27017/event_db
-      KEYCLOAK_ISSUER_URI: https://localhost/keycloak/realms/carrefour_kata_realm
-      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/keycloak/realms/carrefour_kata_realm/protocol/openid-connect/certs
-      KEYCLOAK_CLIENT_ID: "carrefour-kata-id"
+      KEYCLOAK_ISSUER_URI: https://localhost/keycloak/realms/event_booking_realm
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/keycloak/realms/event_booking_realm/protocol/openid-connect/certs
+      KEYCLOAK_CLIENT_ID: "event-booking-id"
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       RESERVATION_EVENTS_TOPIC: reservation-events
 
@@ -134,8 +134,8 @@ services:
       MONGO_URI: mongodb://mongo-reservation:27017/reservation_db
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       EVENT_MS_URL: "http://event-ms:8080"
-      KEYCLOAK_ISSUER_URI: https://localhost/keycloak/realms/carrefour_kata_realm
-      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/keycloak/realms/carrefour_kata_realm/protocol/openid-connect/certs
+      KEYCLOAK_ISSUER_URI: https://localhost/keycloak/realms/event_booking_realm
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/keycloak/realms/event_booking_realm/protocol/openid-connect/certs
 
     depends_on:
       - mongo-reservation
@@ -150,8 +150,8 @@ services:
       SPRING_PROFILES_ACTIVE: default
       MONGO_URI: mongodb://mongo-payment:27017/payment_db
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      KEYCLOAK_ISSUER_URI: https://localhost/keycloak/realms/carrefour_kata_realm
-      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/keycloak/realms/carrefour_kata_realm/protocol/openid-connect/certs
+      KEYCLOAK_ISSUER_URI: https://localhost/keycloak/realms/event_booking_realm
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/keycloak/realms/event_booking_realm/protocol/openid-connect/certs
 
     depends_on:
       - mongo-payment
@@ -182,27 +182,27 @@ services:
 
       FRONT_URI: "https://localhost"
       REDIRECT_URI: "https://localhost/login/oauth2/code/cloud-bff"
-      KEYCLOAK_AUTHORIZATION_URL: "https://localhost/keycloak/realms/carrefour_kata_realm/protocol/openid-connect/auth"
-      KEYCLOAK_LOGOUT_URL: "https://localhost/keycloak/realms/carrefour_kata_realm/protocol/openid-connect/logout"
-      KEYCLOAK_ISSUER_URI: "https://localhost/keycloak/realms/carrefour_kata_realm"
+      KEYCLOAK_AUTHORIZATION_URL: "https://localhost/keycloak/realms/event_booking_realm/protocol/openid-connect/auth"
+      KEYCLOAK_LOGOUT_URL: "https://localhost/keycloak/realms/event_booking_realm/protocol/openid-connect/logout"
+      KEYCLOAK_ISSUER_URI: "https://localhost/keycloak/realms/event_booking_realm"
       POST_LOGOUT_REDIRECT_URI: "https://localhost/signed-out"
 
       # =====================================================
       # Internal Docker -> Keycloak
       # =====================================================
 
-      KEYCLOAK_TOKEN_URL: "http://keycloak:8080/keycloak/realms/carrefour_kata_realm/protocol/openid-connect/token"
-      KEYCLOAK_JWK_SET_URI: "http://keycloak:8080/keycloak/realms/carrefour_kata_realm/protocol/openid-connect/certs"
-      KEYCLOAK_USERINFO_URL: "http://keycloak:8080/keycloak/realms/carrefour_kata_realm/protocol/openid-connect/userinfo"
-      KEYCLOAK_REVOKE_URL: "http://keycloak:8080/keycloak/realms/carrefour_kata_realm/protocol/openid-connect/revoke"
+      KEYCLOAK_TOKEN_URL: "http://keycloak:8080/keycloak/realms/event_booking_realm/protocol/openid-connect/token"
+      KEYCLOAK_JWK_SET_URI: "http://keycloak:8080/keycloak/realms/event_booking_realm/protocol/openid-connect/certs"
+      KEYCLOAK_USERINFO_URL: "http://keycloak:8080/keycloak/realms/event_booking_realm/protocol/openid-connect/userinfo"
+      KEYCLOAK_REVOKE_URL: "http://keycloak:8080/keycloak/realms/event_booking_realm/protocol/openid-connect/revoke"
 
 
       # =====================================================
       # OAuth client
       # =====================================================
 
-      CLIENT_ID: "carrefour-kata-id"
-      CLIENT_SECRET: "3DGnKgdp0so6tDwHLD3jnwLz2oMbRU6n1W28yh8Ut185QgM8WGxti06NcBZmKCcxpdKYtXa78FrEy78lLDpy2q"
+      CLIENT_ID: "event-booking-id"
+      CLIENT_SECRET: "5CLVUx6y28aYKwkwdJMwtzzxbP0qoHeSX7HO2MZkLpi7vvhM6ligGExtWH524u9YoYkZDWDx0jZ1Nm4Fte40Fi"
 
       # =====================================================
       # Redis
